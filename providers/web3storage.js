@@ -1,23 +1,16 @@
 import { Web3Storage } from 'web3.storage'
-import { getFilesFromPath } from 'web3.storage'
+import fs from 'fs'
 
-function getAccessToken() {
-    return process.env.WEB3STORAGE_KEY
-}
+const configs = JSON.parse(fs.readFileSync('./configs.json').toString())
 
 function makeStorageClient() {
-    return new Web3Storage({ token: getAccessToken() })
+    return new Web3Storage({ token: configs.web3storage.jwt })
 }
 
-async function getFiles(path) {
-    const files = await getFilesFromPath(path)
-    console.log(`read ${files.length} file(s) from ${path}`)
-    return files
-}
 
 async function storeWithProgress(files) {
     const onRootCidReady = cid => {
-        console.log('Uploading files to:', process.env.WEB3STORAGE_ENDPOINT + cid)
+        console.log('Uploading files to Web3Storage')
     }
 
     const totalSize = files.map(f => f.size).reduce((a, b) => a + b, 0)
@@ -33,14 +26,30 @@ async function storeWithProgress(files) {
     return client.put(files, { onRootCidReady, onStoredChunk })
 }
 
-export const pinFileToWeb3Storage = async (file) => {
-    const raw = await getFiles('../dist/')
-    let files = []
-    for (let k in raw) {
-        let file = raw[k]
-        file.name = file.name.replace('/dist/', '/')
-        files.push(file)
-    }
-    const uploaded = storeWithProgress(files)
-    return uploaded
-} 
+export const pinFileToWeb3Storage = (path) => {
+    return new Promise(async response => {
+        if (configs.web3storage !== undefined && configs.web3storage.jwt !== undefined) {
+            try {
+                const file = fs.readFileSync(path)
+                let files = [file]
+                const uploaded = await storeWithProgress(files)
+                response(uploaded)
+            } catch (e) {
+                response(false)
+            }
+        } else {
+            response(false)
+        }
+    })
+}
+
+export function returnWeb3StoragePinList() {
+    return new Promise(async response => {
+        const client = makeStorageClient()
+        let pinList = []
+        for await (const pin of client.list()) {
+            pinList.push({ date_pinned: pin.created, metadata: { name: pin.name }, cid: pin.cid, uri: configs.web3storage.endpoint + pin.cid })
+        }
+        response(pinList)
+    })
+}

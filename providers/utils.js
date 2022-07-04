@@ -16,27 +16,31 @@ export function fileExists(searcher) {
 
 export async function downloadFile(fileUrl, outputLocationPath) {
     const writer = fs.createWriteStream(outputLocationPath);
-    return axios({
-        method: 'get',
-        url: fileUrl,
-        responseType: 'stream',
-    }).then(response => {
-        console.log("File type is:", response.headers['content-type'])
-        const extension = response.headers['content-type'].split("/")[1]
-        return new Promise((resolve, reject) => {
-            response.data.pipe(writer);
-            let error = null;
-            writer.on('error', err => {
-                error = err;
-                writer.close();
-                reject(err);
-            });
-            writer.on('close', () => {
-                if (!error) {
-                    fs.renameSync(outputLocationPath, outputLocationPath + "." + extension)
-                    resolve(true);
-                }
+    try {
+        return axios({
+            method: 'get',
+            url: fileUrl,
+            responseType: 'stream',
+        }).then(response => {
+            console.log("File type is:", response.headers['content-type'])
+            const extension = response.headers['content-type'].split("/")[1]
+            return new Promise((resolve) => {
+                response.data.pipe(writer);
+                let error = null;
+                writer.on('error', err => {
+                    error = err;
+                    writer.close();
+                    resolve(false);
+                });
+                writer.on('close', () => {
+                    if (!error) {
+                        fs.renameSync(outputLocationPath, outputLocationPath + "." + extension)
+                        resolve(true);
+                    }
+                });
             });
         });
-    });
+    } catch (e) {
+        return false
+    }
 }
