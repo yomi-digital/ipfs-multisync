@@ -1,0 +1,27 @@
+{
+  "name": "ipfs-multisync",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sync.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon sync.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yomi-digital/ipfs-multisync.git"
+  },
+  "author": "Sebastiano Cataudo aka turinglabs <sebastiano@yomi.digital>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yomi-digital/ipfs-multisync/issues"
+  },
+  "homepage": "https://github.com/yomi-digital/ipfs-multisync#readme",
+  "dependencies": {
+    "@pinata/sdk": "^1.1.26",
+    "axios": "^0.27.2",
+    "glob": "^8.0.3",
+    "minimist": "^1.2.6",
+    "nodemon": "^2.0.18"
+  }
+}
